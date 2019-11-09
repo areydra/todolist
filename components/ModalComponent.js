@@ -7,24 +7,50 @@ import {
   Dimensions,
   Picker,
   Button,
+  TextInput,
+  Image,
   TouchableOpacity
 } from "react-native";
+import DateTimePicker from "react-native-modal-datetime-picker";
+import moment from "moment";
+
 import Colors from "../constants/Colors";
 
 const { width, height } = Dimensions.get("window");
 
 const ModalComponent = props => {
-  const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
+  const [category, setCategory] = useState("Important");
   const [visible, setVisible] = useState(false);
+  const [dateShow, setDateShow] = useState("Select your date limit");
+  const [search, setSearch] = useState("");
+  const [date, setDate] = useState("");
+  const [dateTimePickerVisible, setDateTimePickerVisible] = useState(false);
+
+  const Item = Picker.Item;
+  const title = props.title.toUpperCase();
 
   useEffect(() => {
     setVisible(props.visible);
   }, [props.visible]);
 
-  const Item = Picker.Item;
-  const title = props.title.toUpperCase();
+  const showDateTimePicker = () => {
+    setDateTimePickerVisible(true);
+  };
 
+  const hideDateTimePicker = () => {
+    setDateTimePickerVisible(false);
+  };
+
+  const handleDatePicked = date => {
+    setDate(date);
+    setDateShow(moment(date).format("LL"));
+    hideDateTimePicker();
+  };
+
+  const handleSearch = text => {
+    setSearch(text);
+  }
   return (
     <Modal visible={visible} transparent={true} animationType="fade">
       <TouchableOpacity
@@ -34,6 +60,41 @@ const ModalComponent = props => {
       >
         <View style={styles.modalBox}>
           <Text style={styles.title}>{title}</Text>
+          <DateTimePicker
+            isVisible={dateTimePickerVisible}
+            onConfirm={handleDatePicked}
+            onCancel={hideDateTimePicker}
+          />
+          {/* Show only in search */}
+          {title === "SEARCH" ? (
+            <React.Fragment>
+              <View style={styles.containerFilter}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <TouchableOpacity
+                    onPress={showDateTimePicker}
+                    style={styles.containerDatePicker}
+                  >
+                    <TextInput
+                      style={{ paddingLeft: 10 }}
+                      placeholder="Search heree"
+                      onChangeText={text => handleSearch(text)}
+                      onSubmitEditing={handleSearch}
+                      returnKeyType="search"
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleSearch}>
+                    <View style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.secondary, height: 30, width: 30, marginRight: 10, marginLeft: -11, borderTopRightRadius: 30, borderBottomRightRadius: 30 }}>
+                      <Image
+                        source={require("../assets/icons/search.png")}
+                        style={{ height: 17, width: 17 }}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </React.Fragment>
+          ) : null}
+          {/* Show only in filter */}
           {title === "FILTER" ? (
             <View style={styles.containerFilter}>
               <Text style={styles.label}>Status</Text>
@@ -51,7 +112,39 @@ const ModalComponent = props => {
               </View>
             </View>
           ) : null}
-          {title !== "SEARCH" ? (
+          {/* Show only in add */}
+          {title === "ADD TODO" ? (
+            <React.Fragment>
+              <View style={styles.containerFilter}>
+                <Text style={styles.label}>Title</Text>
+                <View style={styles.containerPicker}>
+                  <TextInput
+                    placeholder="Type here.."
+                    style={{ paddingLeft: 10 }}
+                  />
+                </View>
+              </View>
+              <View style={styles.containerFilter}>
+                <Text style={styles.label}>Date</Text>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <TouchableOpacity
+                    onPress={showDateTimePicker}
+                    style={styles.containerDatePicker}
+                  >
+                    <Text style={{ paddingLeft: 10 }}>{dateShow}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={showDateTimePicker}>
+                    <Image
+                      source={require("../assets/icons/calendar.png")}
+                      style={{ height: 28, width: 28, marginRight: 10 }}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </React.Fragment>
+          ) : null}
+          {/* Show only except filter */}
+          {title !== "INFORMATION" && title !== "SEARCH" ? (
             <React.Fragment>
               <View style={styles.containerFilter}>
                 <Text style={styles.label}>Category</Text>
@@ -66,19 +159,19 @@ const ModalComponent = props => {
                     <Item label="Important" value="Important" />
                     <Item label="Event" value="Event" />
                   </Picker>
-                  {category ? (
-                    <View
-                      style={{
-                        height: 5,
-                        width: "100%",
-                        marginTop: 10,
-                        backgroundColor:
-                          category === "Important"
-                            ? Colors.important
-                            : Colors.event
-                      }}
-                    />
-                  ) : null}
+                </View>
+                <View style={{ marginHorizontal: 10 }}>
+                  <View
+                    style={{
+                      height: 5,
+                      width: "100%",
+                      marginTop: 10,
+                      backgroundColor:
+                        category === "Important"
+                          ? Colors.important
+                          : Colors.event
+                    }}
+                  />
                 </View>
               </View>
               <View style={styles.containerButton}>
@@ -137,7 +230,17 @@ const styles = StyleSheet.create({
   containerPicker: {
     borderColor: Colors.border,
     borderWidth: 1,
-    marginHorizontal: 10
+    height: 30,
+    marginHorizontal: 10,
+    justifyContent: "center"
+  },
+  containerDatePicker: {
+    flex: 1,
+    borderColor: Colors.border,
+    height: 30,
+    borderWidth: 1,
+    marginHorizontal: 10,
+    justifyContent: "center"
   },
   containerButton: {
     marginTop: 30,
