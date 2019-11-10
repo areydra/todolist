@@ -9,30 +9,74 @@ import {
   Button,
   TextInput,
   Image,
-  TouchableOpacity
+  TouchableOpacity,
+  ActivityIndicator,
+  Keyboard,
+  Alert
 } from "react-native";
 import DateTimePicker from "react-native-modal-datetime-picker";
 import moment from "moment";
+import { useSelector } from "react-redux";
 
 import Colors from "../constants/Colors";
 
 const { width, height } = Dimensions.get("window");
 
 const ModalComponent = props => {
-  const [status, setStatus] = useState("");
-  const [category, setCategory] = useState("Important");
+  const [status, setStatus] = useState("false");
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("false");
   const [visible, setVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [dateShow, setDateShow] = useState("Select your date limit");
   const [search, setSearch] = useState("");
   const [date, setDate] = useState("");
   const [dateTimePickerVisible, setDateTimePickerVisible] = useState(false);
 
   const Item = Picker.Item;
-  const title = props.title.toUpperCase();
+  const titleShow = props.title.toUpperCase();
+  const filterCondition = useSelector(
+    state => state.todolist.filterCondition,
+    []
+  );
 
   useEffect(() => {
     setVisible(props.visible);
-  }, [props.visible]);
+    resetState();
+  }, [props.visible, filterCondition]);
+
+  const resetState = () => {
+    if (titleShow === "ADD TODO") {
+      setTitle("");
+      setCategory("false");
+      setDate("");
+      setDateShow("Select your date limit");
+    } else if (titleShow === "FILTER") {
+      if (filterCondition.status) {
+        setStatus(filterCondition.status.toString());
+        setCategory(filterCondition.category.toString());
+      } else {
+        setCategory("false");
+        setStatus("false");
+      }
+    } else if (titleShow === "SEARCH") {
+      setSearch("");
+    }
+  };
+
+  const createTodolist = async () => {
+    setLoading(true);
+    const data = {
+      title: title,
+      date: date,
+      category: category,
+      status: "process"
+    };
+    props.onCreate(data).then(() => {
+      setLoading(false);
+      setVisible(false);
+    });
+  };
 
   const showDateTimePicker = () => {
     setDateTimePickerVisible(true);
@@ -43,30 +87,59 @@ const ModalComponent = props => {
   };
 
   const handleDatePicked = date => {
-    setDate(date);
+    setDate(moment(date).valueOf());
     setDateShow(moment(date).format("LL"));
     hideDateTimePicker();
   };
 
-  const handleSearch = text => {
-    setSearch(text);
-  }
+  const handleSearch = () => {
+    props.onSearch(search);
+    props.hideVisible(true);
+  };
+
   return (
     <Modal visible={visible} transparent={true} animationType="fade">
       <TouchableOpacity
         style={styles.container}
-        onPress={() => props.hideVisible(true)}
+        onPress={() => Keyboard.dismiss()}
         activeOpacity={1}
       >
         <View style={styles.modalBox}>
-          <Text style={styles.title}>{title}</Text>
+          {titleShow === "SEARCH" || titleShow === "INFORMATION" ? (
+            <View
+              style={{
+                flex: 1
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => props.hideVisible(true)}
+                style={{
+                  zIndex: 10,
+                  width: 25,
+                  height: 25,
+                  marginRight: 10,
+                  marginTop: -10,
+                  alignSelf: "flex-end"
+                }}
+              >
+                <Image
+                  source={require("../assets/icons/close-rounded.png")}
+                  style={{
+                    width: 20,
+                    height: 20
+                  }}
+                />
+              </TouchableOpacity>
+            </View>
+          ) : null}
+          <Text style={styles.title}>{titleShow}</Text>
           <DateTimePicker
             isVisible={dateTimePickerVisible}
             onConfirm={handleDatePicked}
             onCancel={hideDateTimePicker}
           />
           {/* Show only in search */}
-          {title === "SEARCH" ? (
+          {titleShow === "SEARCH" ? (
             <React.Fragment>
               <View style={styles.containerFilter}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -77,13 +150,25 @@ const ModalComponent = props => {
                     <TextInput
                       style={{ paddingLeft: 10 }}
                       placeholder="Search heree"
-                      onChangeText={text => handleSearch(text)}
+                      onChangeText={text => setSearch(text)}
                       onSubmitEditing={handleSearch}
                       returnKeyType="search"
                     />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={handleSearch}>
-                    <View style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.secondary, height: 30, width: 30, marginRight: 10, marginLeft: -11, borderTopRightRadius: 30, borderBottomRightRadius: 30 }}>
+                    <View
+                      style={{
+                        justifyContent: "center",
+                        alignItems: "center",
+                        backgroundColor: Colors.secondary,
+                        height: 30,
+                        width: 30,
+                        marginRight: 10,
+                        marginLeft: -11,
+                        borderTopRightRadius: 30,
+                        borderBottomRightRadius: 30
+                      }}
+                    >
                       <Image
                         source={require("../assets/icons/search.png")}
                         style={{ height: 17, width: 17 }}
@@ -95,7 +180,7 @@ const ModalComponent = props => {
             </React.Fragment>
           ) : null}
           {/* Show only in filter */}
-          {title === "FILTER" ? (
+          {titleShow === "FILTER" ? (
             <View style={styles.containerFilter}>
               <Text style={styles.label}>Status</Text>
               <View style={styles.containerPicker}>
@@ -106,14 +191,15 @@ const ModalComponent = props => {
                     setStatus(val);
                   }}
                 >
+                  <Item label="Select your todolist status" value="false" />
                   <Item label="Done" value="Done" />
-                  <Item label="Waiting" value="Waiting" />
+                  <Item label="Process" value="Process" />
                 </Picker>
               </View>
             </View>
           ) : null}
           {/* Show only in add */}
-          {title === "ADD TODO" ? (
+          {titleShow === "ADD TODO" ? (
             <React.Fragment>
               <View style={styles.containerFilter}>
                 <Text style={styles.label}>Title</Text>
@@ -121,6 +207,8 @@ const ModalComponent = props => {
                   <TextInput
                     placeholder="Type here.."
                     style={{ paddingLeft: 10 }}
+                    autoCapitalize="sentences"
+                    onChangeText={text => setTitle(text)}
                   />
                 </View>
               </View>
@@ -144,7 +232,7 @@ const ModalComponent = props => {
             </React.Fragment>
           ) : null}
           {/* Show only except filter */}
-          {title !== "INFORMATION" && title !== "SEARCH" ? (
+          {titleShow !== "INFORMATION" && titleShow !== "SEARCH" ? (
             <React.Fragment>
               <View style={styles.containerFilter}>
                 <Text style={styles.label}>Category</Text>
@@ -156,23 +244,26 @@ const ModalComponent = props => {
                       setCategory(val);
                     }}
                   >
+                    <Item label="Select your category" value="false" />
                     <Item label="Important" value="Important" />
                     <Item label="Event" value="Event" />
                   </Picker>
                 </View>
-                <View style={{ marginHorizontal: 10 }}>
-                  <View
-                    style={{
-                      height: 5,
-                      width: "100%",
-                      marginTop: 10,
-                      backgroundColor:
-                        category === "Important"
-                          ? Colors.important
-                          : Colors.event
-                    }}
-                  />
-                </View>
+                {category.length && category !== "false" ? (
+                  <View style={{ marginHorizontal: 10 }}>
+                    <View
+                      style={{
+                        height: 5,
+                        width: "100%",
+                        marginTop: 10,
+                        backgroundColor:
+                          category === "Important"
+                            ? Colors.important
+                            : Colors.event
+                      }}
+                    />
+                  </View>
+                ) : null}
               </View>
               <View style={styles.containerButton}>
                 <View style={{ width: 100, overflow: "hidden" }}>
@@ -182,10 +273,23 @@ const ModalComponent = props => {
                     onPress={() => props.hideVisible(true)}
                   />
                 </View>
+                {loading ? (
+                  <View style={{ width: 50 }}>
+                    <ActivityIndicator size="small" color={Colors.secondary} />
+                  </View>
+                ) : null}
                 <View style={{ width: 100, overflow: "hidden" }}>
                   <Button
-                    title={title === "FILTER" ? "FILTER" : "ADD TODO"}
+                    title={titleShow === "FILTER" ? "FILTER" : "ADD TODO"}
                     color={Colors.secondary}
+                    onPress={() => {
+                      if (titleShow === "FILTER") {
+                        props.onFilter({ category: category, status: status });
+                      } else {
+                        createTodolist();
+                      }
+                      props.hideVisible(true);
+                    }}
                   />
                 </View>
               </View>

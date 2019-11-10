@@ -1,5 +1,12 @@
 import React from "react";
-import { View, Text, Image, StyleSheet, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity
+} from "react-native";
 import Colors from "../constants/Colors";
 
 const { width } = Dimensions.get("window");
@@ -10,8 +17,6 @@ const Card = props => {
     color = Colors.important;
   } else if (props.category === "event") {
     color = Colors.event;
-  } else if (props.category === "done") {
-    color = Colors.secondary;
   } else {
     color = Colors.border;
   }
@@ -19,17 +24,19 @@ const Card = props => {
   return (
     <View style={{ ...styles.container, borderLeftColor: color }}>
       <View style={styles.cardHeader}>
-        <Text style={styles.textContent}>{props.content}</Text>
+        <Text style={styles.textTitle}>{props.title}</Text>
       </View>
-      <View style={ styles.cardFooter }>
-        <Image
-          source={require("../assets/icons/close.png")}
-          style={styles.iconActionClose}
-        />
+      <View style={styles.cardFooter}>
+        <TouchableOpacity onPress={() => props.onDeleteTodo(props.id, props.status)}>
+          <Image
+            source={require("../assets/icons/close.png")}
+            style={styles.iconActionClose}
+          />
+        </TouchableOpacity>
         <View style={styles.containerDate}>
           <Image
             source={
-              props.category !== "done"
+              props.status !== "done"
                 ? require("../assets/icons/hourglass.png")
                 : null
             }
@@ -37,11 +44,13 @@ const Card = props => {
           />
           <Text style={styles.textDate}>{props.date}</Text>
         </View>
-        {props.category !== "done" ? (
-          <Image
-            source={require("../assets/icons/done.png")}
-            style={styles.iconActionDone}
-          />
+        {props.status !== "done" ? (
+          <TouchableOpacity onPress={() => props.onUpdateTodo(props.id)}>
+            <Image
+              source={require("../assets/icons/done.png")}
+              style={styles.iconActionDone}
+            />
+          </TouchableOpacity>
         ) : null}
       </View>
     </View>
@@ -67,7 +76,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: 'space-between'
   },
-  textContent: {
+  textTitle: {
     textAlign: "center",
     fontSize: 15
   },
