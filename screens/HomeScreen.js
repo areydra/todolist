@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,11 @@ import {
   Dimensions
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
+import { Notifications } from "expo";
 import moment from "moment";
+import * as BackgroundFetch from "expo-background-fetch";
+import * as TaskManager from "expo-task-manager";
+import * as Permissions from "expo-permissions";
 
 import Colors from "../constants/Colors";
 import CircleTop from "../components/CircleTop";
@@ -20,6 +24,21 @@ import * as Todolist from "../store/actions/todolist";
 
 const { width } = Dimensions.get("window");
 
+const taskName = "test-background-fetch";
+TaskManager.defineTask(taskName, () => {
+  try {
+    const receivedNewData = Notifications.presentLocalNotificationAsync({
+      title: "Your todo list, less than 12 hours",
+      body: "Check on app"
+    });
+    return receivedNewData
+      ? BackgroundFetch.Result.NewData
+      : BackgroundFetch.Result.NoData;
+  } catch (error) {
+    return BackgroundFetch.Result.Failed;
+  }
+});
+
 const HomeScreen = () => {
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -28,11 +47,37 @@ const HomeScreen = () => {
   const [dataFilter, setDataFilter] = useState([]);
   const dispatch = useDispatch();
   const todolist = useSelector(state => state.todolist.todolist, []);
-  const clearSearch = ""
+  const todolistDate = useSelector(state => state.todolist.todolistDate, []);
+  const clearSearch = "";
 
   useEffect(() => {
     fetchTodolist();
+    registerTaskAsync();
+    alertIfRemoteNotificationsDisabledAsync();
   }, [fetchTodolist]);
+
+  registerTaskAsync = () => {
+    setInterval(async() => {
+      if(todolistDate[0]){
+        if(todolistDate[0].date < Date.now()){
+          await BackgroundFetch.registerTaskAsync(taskName, {
+            minimumInterval: 60,
+            stopOnTerminate: false,
+            startOnBoot: true
+          }).then(() => BackgroundFetch.setMinimumIntervalAsync(60));
+          await dispatch(Todolist.doneDate(todolistDate[0].id));
+        }
+      }
+    }, 1000)
+  };
+  const alertIfRemoteNotificationsDisabledAsync = async () => {
+    const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+    if (status !== "granted") {
+      alert(
+        "Hey! You might want to enable notifications for my app, they are good."
+      );
+    }
+  };
 
   const fetchTodolist = async () => {
     await dispatch(Todolist.fetchTodolist()).then(() => {
@@ -74,18 +119,18 @@ const HomeScreen = () => {
     await dispatch(Todolist.filterTodo(data));
   };
 
-  const handleClearFilter = async() => {
-    setDataFilter([])
-    await dispatch(Todolist.clearFilterTodo(search))
-  }
+  const handleClearFilter = async () => {
+    setDataFilter([]);
+    await dispatch(Todolist.clearFilterTodo(search));
+  };
 
   const handleSearch = async search => {
-    setSearch(search)
-    await dispatch(Todolist.searchTodo(search))
-  }
+    setSearch(search);
+    await dispatch(Todolist.searchTodo(search));
+  };
 
   const handleClearSearch = async () => {
-    setSearch('')
+    setSearch("");
     await dispatch(Todolist.clearSearchTodo(clearSearch));
   };
 
@@ -129,7 +174,9 @@ const HomeScreen = () => {
             {dataFilter.status !== "false"
               ? ` status ${dataFilter.status.toLowerCase()} `
               : null}
-            {dataFilter.category !== "false" && dataFilter.status !== 'false' ? "and" : null}
+            {dataFilter.category !== "false" && dataFilter.status !== "false"
+              ? "and"
+              : null}
             {dataFilter.category !== "false"
               ? ` category ${dataFilter.category.toLowerCase()}`
               : null}

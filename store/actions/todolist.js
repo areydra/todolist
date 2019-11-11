@@ -13,6 +13,7 @@ export const FILTER_TODO = 'FILTER_TODO'
 export const CLEAR_FILTER = "CLEAR_FILTER"
 export const SEARCH_TODO = "SEARCH_TODO"
 export const CLEAR_SEARCH = "CLEAR_SEARCH";
+export const DONE_DATE = "DONE_DATE";
 
 export const addTodo = data => {
     return async dispatch => {
@@ -26,7 +27,8 @@ export const addTodo = data => {
                     data.title,
                     data.category,
                     data.date,
-                    data.status
+                    data.status,
+                    data.statusDate
                     )
                 });
             }).catch(err => {
@@ -46,7 +48,16 @@ export const fetchTodolist = () => {
             const todolist = []
             await firebase.database().ref('todolist').once('value', snapshot => {
                 for(key in snapshot.val()){
-                    todolist.push(new Todolist(key, snapshot.val()[key].title, snapshot.val()[key].category, snapshot.val()[key].date, snapshot.val()[key].status))
+                    todolist.push(
+                      new Todolist(
+                        key,
+                        snapshot.val()[key].title,
+                        snapshot.val()[key].category,
+                        snapshot.val()[key].date,
+                        snapshot.val()[key].status,
+                        snapshot.val()[key].statusDate
+                      )
+                    );
                 }
             })
             dispatch({type: FETCH_TODO, todolist: todolist})
@@ -120,6 +131,20 @@ export const clearSearchTodo = search => {
             dispatch({type: CLEAR_SEARCH, search: search})
         }catch(err){
             throw Error(err)
+        }
+    }
+}
+
+export const doneDate = id => {
+    return async dispatch => {
+        try {
+            await firebase.database().ref(`todolist/${id}`).update({statusDate : 'done'}).then(() => {
+              dispatch({ type: DONE_DATE, id: id });
+            }).catch(err => {
+                throw new Error(err)
+            })
+        } catch (err) {
+          throw Error(err);
         }
     }
 }

@@ -70,7 +70,8 @@ const ModalComponent = props => {
       title: title,
       date: date,
       category: category,
-      status: "process"
+      status: "process",
+      statusDate: "waiting"
     };
     props.onCreate(data).then(() => {
       setLoading(false);
