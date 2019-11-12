@@ -32,16 +32,20 @@ Todolist is app for create your todo
 ## Screenshots
   <p align="center">
     <span>
-      <img src="https://imgur.com/PUwstCV.gif" width="250px" />
+      <img src="https://imgur.com/BFDIY8J.jpeg" width="250px" />
       &nbsp;&nbsp;
-      <img src="https://imgur.com/3ZFJigA.gif" width="250px" />
+      <img src="https://imgur.com/NWeP2tj.jpeg" width="250px" />
+      &nbsp;&nbsp;
+      <img src="https://imgur.com/53xEMzO.jpeg" width="250px" />
     </span>
   </p>
 <p align="center">
     <span>
-      <img src="https://imgur.com/nZWh7RE.gif" width="250px" />
-      &nbsp;&nbsp
-      <img src="https://imgur.com/cjjQBy9.gif" width="250px" />
+      <img src="https://imgur.com/mh2Caev.jpeg" width="250px" />
+      &nbsp;&nbsp;
+      <img src="https://imgur.com/61MBkWY.jpeg" width="250px" />
+      &nbsp;&nbsp;
+      <img src="https://imgur.com/LpEW9ie.jpeg" width="250px" />
     </span>
   </p>
   
