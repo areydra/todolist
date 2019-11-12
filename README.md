@@ -50,6 +50,6 @@ Todolist is app for create your todo
   </p>
   
 ## Release APK
-<a href="https://bit.ly/35UtUNp">
+<a href="https://drive.google.com/file/d/1YYYSu1toYtmZ7WQQ9t_7K-_OkMUIdQ3j/view?usp=sharing">
   Download here
 </a>
