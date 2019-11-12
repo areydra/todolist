@@ -9,11 +9,9 @@ import {
   Dimensions
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { Notifications } from "expo";
 import moment from "moment";
-import * as BackgroundFetch from "expo-background-fetch";
-import * as TaskManager from "expo-task-manager";
-import * as Permissions from "expo-permissions";
+import PushNotifications from 'react-native-push-notification'
+import BackgroundFetch from 'react-native-background-fetch'
 
 import Colors from "../constants/Colors";
 import CircleTop from "../components/CircleTop";
@@ -24,61 +22,62 @@ import * as Todolist from "../store/actions/todolist";
 
 const { width } = Dimensions.get("window");
 
-const taskName = "test-background-fetch";
-TaskManager.defineTask(taskName, () => {
-  try {
-    const receivedNewData = Notifications.presentLocalNotificationAsync({
-      title: "Your todo list, less than 12 hours",
-      body: "Check on app"
-    });
-    return receivedNewData
-      ? BackgroundFetch.Result.NewData
-      : BackgroundFetch.Result.NoData;
-  } catch (error) {
-    return BackgroundFetch.Result.Failed;
-  }
-});
-
 const HomeScreen = () => {
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [search, setSearch] = useState("");
   const [dataFilter, setDataFilter] = useState([]);
+  const [index, setIndex] = useState(0);
   const dispatch = useDispatch();
   const todolist = useSelector(state => state.todolist.todolist, []);
   const todolistDate = useSelector(state => state.todolist.todolistDate, []);
   const clearSearch = "";
 
+  PushNotifications.configure({
+    onRegister: token => {
+      console.log(token)
+    },
+    onNotification: notification => {
+      console.log('notif', notification)
+    },
+    requestPermissions: true
+  })
+
+  useEffect(() => {
+    BackgroundFetch.configure({
+      minimumFetchInterval: 15,     
+      stopOnTerminate: false,
+      startOnBoot: true,
+      requiredNetworkType: BackgroundFetch.NETWORK_TYPE_NONE,
+      requiresCharging: false,     
+      requiresDeviceIdle: false,   
+      requiresBatteryNotLow: false,
+      requiresStorageNotLow: false 
+    }, async() => {
+      if(todolistDate[index]){
+        let lessDate = todolistDate[index].date - 44100000;
+        if (lessDate < Date.now()) {
+          PushNotifications.localNotification({
+            title: 'Notification for todo ' + todolistDate[index].title,
+            message: 'Your todo, less than 12 hours.',
+            playSound: true,
+            soundName: 'default',
+          });
+        }
+        await dispatch(Todolist.doneDate(todolistDate[index].id));
+      }
+      await setIndex(prevState => prevState+1)
+      BackgroundFetch.finish();
+    }, (error) => {
+      console.log(err);
+    });
+  })
+
   useEffect(() => {
     fetchTodolist();
-    registerTaskAsync();
-    alertIfRemoteNotificationsDisabledAsync();
   }, [fetchTodolist]);
-
-  registerTaskAsync = () => {
-    setInterval(async() => {
-      if(todolistDate[0]){
-        if(todolistDate[0].date < Date.now()){
-          await BackgroundFetch.registerTaskAsync(taskName, {
-            minimumInterval: 60,
-            stopOnTerminate: false,
-            startOnBoot: true
-          }).then(() => BackgroundFetch.setMinimumIntervalAsync(60));
-          await dispatch(Todolist.doneDate(todolistDate[0].id));
-        }
-      }
-    }, 1000)
-  };
-  const alertIfRemoteNotificationsDisabledAsync = async () => {
-    const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
-    if (status !== "granted") {
-      alert(
-        "Hey! You might want to enable notifications for my app, they are good."
-      );
-    }
-  };
-
+  
   const fetchTodolist = async () => {
     await dispatch(Todolist.fetchTodolist()).then(() => {
       setLoading(false);
@@ -111,7 +110,9 @@ const HomeScreen = () => {
   const handleUpdateTodo = async id => {
     let index = todolist.findIndex(todo => todo.id === id);
     await dispatch(Todolist.updateTodo(id, index));
-    handleFilter(dataFilter);
+    if(dataFilter.status){
+      handleFilter(dataFilter);
+    }
   };
 
   const handleFilter = async data => {

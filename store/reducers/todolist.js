@@ -1,4 +1,4 @@
-import { ADD_TODO, FETCH_TODO, DELETE_TODO, UPDATE_TODO, FILTER_TODO, CLEAR_FILTER, SEARCH_TODO, CLEAR_SEARCH, searchTodo, DONE_DATE } from "../actions/todolist";
+import { ADD_TODO, FETCH_TODO, DELETE_TODO, UPDATE_TODO, FILTER_TODO, CLEAR_FILTER, SEARCH_TODO, CLEAR_SEARCH, DONE_DATE } from "../actions/todolist";
 import _ from 'lodash'
 import moment from "moment";
 

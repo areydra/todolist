@@ -66,6 +66,17 @@ const ModalComponent = props => {
 
   const createTodolist = async () => {
     setLoading(true);
+    if(!title.length){
+      Alert.alert('Error', 'title cannot be null', ['Ok'])
+      setLoading(false)
+      return
+    }
+    if(!date){
+      Alert.alert('Error', 'date cannot be null', ['Ok']);
+      setLoading(false);
+      return
+    }
+
     const data = {
       title: title,
       date: date,
@@ -75,7 +86,7 @@ const ModalComponent = props => {
     };
     props.onCreate(data).then(() => {
       setLoading(false);
-      setVisible(false);
+      props.hideVisible(true);
     });
   };
 
@@ -149,7 +160,7 @@ const ModalComponent = props => {
                     style={styles.containerDatePicker}
                   >
                     <TextInput
-                      style={{ paddingLeft: 10 }}
+                      style={{ paddingLeft: 10, paddingVertical: 0 }}
                       placeholder="Search heree"
                       onChangeText={text => setSearch(text)}
                       onSubmitEditing={handleSearch}
@@ -207,7 +218,7 @@ const ModalComponent = props => {
                 <View style={styles.containerPicker}>
                   <TextInput
                     placeholder="Type here.."
-                    style={{ paddingLeft: 10 }}
+                    style={{ paddingLeft: 10, paddingVertical: 0 }}
                     autoCapitalize="sentences"
                     onChangeText={text => setTitle(text)}
                   />
@@ -286,10 +297,10 @@ const ModalComponent = props => {
                     onPress={() => {
                       if (titleShow === "FILTER") {
                         props.onFilter({ category: category, status: status });
+                        props.hideVisible(true);
                       } else {
                         createTodolist();
                       }
-                      props.hideVisible(true);
                     }}
                   />
                 </View>
@@ -306,52 +317,52 @@ const styles = StyleSheet.create({
   container: {
     width: width,
     height: height,
-    position: "absolute",
+    position: 'absolute',
     zIndex: 2,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.45)"
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
   modalBox: {
     paddingVertical: 20,
     width: width / 1.2,
     backgroundColor: Colors.background,
-    borderRadius: 10
+    borderRadius: 10,
   },
   title: {
-    textAlign: "center",
+    textAlign: 'center',
     fontSize: 25,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: 20,
-    color: Colors.primary
+    color: Colors.primary,
   },
   containerFilter: {
-    marginVertical: width / 30
+    marginVertical: width / 30,
   },
   label: {
     marginLeft: 10,
-    marginBottom: 5
+    marginBottom: 5,
   },
   containerPicker: {
     borderColor: Colors.border,
     borderWidth: 1,
     height: 30,
     marginHorizontal: 10,
-    justifyContent: "center"
+    justifyContent: 'center',
   },
   containerDatePicker: {
     flex: 1,
     borderColor: Colors.border,
-    height: 30,
     borderWidth: 1,
     marginHorizontal: 10,
-    justifyContent: "center"
+    height: 30,
+    justifyContent: 'center'
   },
   containerButton: {
     marginTop: 30,
-    flexDirection: "row",
-    justifyContent: "space-around"
-  }
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
 });
 
 export default ModalComponent;
