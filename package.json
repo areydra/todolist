@@ -14,7 +14,7 @@
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
     "react": "16.9.0",
-    "react-native": "0.61.4",
+    "react-native": "0.62.3",
     "react-native-background-fetch": "^2.7.1",
     "react-native-modal-datetime-picker": "^7.6.0",
     "react-native-push-notification": "^3.1.9",
